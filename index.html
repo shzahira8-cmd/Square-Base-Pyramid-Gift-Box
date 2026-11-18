@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Interactive Square Pyramid Gift Box</title>
+
+<style>
+:root{
+font-family:Arial,sans-serif;
+color:#172033;
+background:#f4f6fa
+}
+*{box-sizing:border-box}
+body{margin:0;padding:20px}
+.wrap{max-width:900px;margin:auto}
+.head{
+display:flex;justify-content:space-between;
+align-items:center;gap:12px;flex-wrap:wrap
+}
+.head h1{font-size:clamp(22px,4vw,32px);margin:0}
+.tag{
+background:#e1ecff;color:#174b83;
+padding:8px 12px;border-radius:30px;
+font-size:12px;font-weight:bold
+}
+.sub{color:#657187;margin:7px 0 18px}
+.scene{
+background:#101d36;border-radius:18px;
+overflow:hidden;box-shadow:0 8px 24px #15233b20;
+position:relative
+}
+svg{
+width:100%;height:auto;display:block;
+touch-action:none;cursor:grab
+}
+svg:active{cursor:grabbing}
+.status{
+position:absolute;top:13px;left:13px;
+background:#ffffff25;color:white;
+padding:9px 12px;border-radius:9px;
+font-size:12px;font-weight:bold
+}
+.controls{
+display:grid;grid-template-columns:repeat(4,1fr);
+gap:9px;margin:12px 0
+}
+.btn{
+border:1px solid #d6dce7;background:white;
+border-radius:11px;padding:12px 8px;
+font-weight:bold;cursor:pointer
+}
+.btn.active{
+background:#24548a;color:white;
+border-color:#24548a
+}
+.btn:hover{filter:brightness(.97)}
+.panel,.metric{
+background:white;border:1px solid #e0e5ee;
+border-radius:13px;padding:14px;margin:12px 0
+}
+.panel h2{font-size:15px;margin:0 0 12px}
+.metrics{
+display:grid;grid-template-columns:repeat(3,1fr);
+gap:10px
+}
+.metric small,.small{
+display:block;color:#788398;font-size:12px
+}
+.metric strong{
+display:block;font-size:24px;margin-top:6px
+}
+.legend{
+display:grid;grid-template-columns:repeat(2,1fr);
+gap:11px;font-size:13px
+}
+.dot{
+display:inline-block;width:11px;height:11px;
+border-radius:3px;margin-right:7px
+}
+.facts{
+display:grid;grid-template-columns:repeat(2,1fr);
+gap:13px;font-size:14px
+}
+.facts small{
+display:block;color:#788398;margin-bottom:3px
+}
+.explain{
+font-size:14px;line-height:1.5;color:#536078;
+margin:0
+}
+.range{width:100%;accent-color:#327fba}
+.ends{
+display:flex;justify-content:space-between;
+color:#788398;font-size:12px;margin-top:4px
+}
+.foot{
+text-align:center;color:#788398;
+font-size:12px;margin:18px 0
+}
+.calc{
+border:1px solid #e1e6ef;
+background:#f8faff;border-radius:11px;
+padding:12px;margin:10px 0;
+line-height:1.55;font-size:14px
+}
+.calc h3{
+font-size:14px;margin:0 0 8px;color:#174b83
+}
+.calc p{margin:5px 0}
+.calc .answer{
+font-weight:800;color:#145b3c;
+background:#e8f6ee;border-radius:7px;
+padding:8px;margin-top:9px
+}
+.note{
+background:#fff6df;border-left:4px solid #e5ad3e;
+padding:11px;border-radius:7px;
+font-size:13px;line-height:1.5;margin-top:12px
+}
+@media(max-width:560px){
+body{padding:13px}
+.controls{grid-template-columns:repeat(2,1fr)}
+.metrics{gap:6px}
+.metric{padding:10px}
+.metric strong{font-size:21px}
+.legend{font-size:12px}
+.calc{font-size:13px;padding:10px}
+}
+</style>
+</head>
+
+<body>
+<main class="wrap">
+
+<div class="head">
+<h1>PYRAMID GIFT BOX</h1>
+<span class="tag">INTERACTIVE 3D GEOMETRY</span>
+</div>
+
+<p class="sub">
+Explore your square pyramid gift box · Rotate, open and inspect its net.
+</p>
+
+<!-- INTERACTIVE 3D MODEL -->
+<div class="scene">
+<div class="status" id="status">CLOSED BOX</div>
+
+<svg id="model" viewBox="0 0 700 500"
+aria-label="Rotatable square pyramid model">
+
+<defs>
+<pattern id="grid" width="25" height="25"
+patternUnits="userSpaceOnUse">
+<path d="M25 0H0V25" fill="none"
+stroke="#fff" stroke-opacity=".06"/>
+</pattern>
+
+<linearGradient id="bg" x2="1" y2="1">
+<stop stop-color="#1c3457"/>
+<stop offset="1" stop-color="#091529"/>
+</linearGradient>
+</defs>
+
+<rect width="700" height="500" fill="url(#bg)"/>
+<rect width="700" height="500" fill="url(#grid)"/>
+
+<g id="art"></g>
+
+<text x="350" y="475" text-anchor="middle"
+fill="#b9c9df" font-size="12">
+DRAG TO ROTATE THE MODEL
+</text>
+</svg>
+</div>
+
+<!-- MODEL CONTROLS -->
+<div class="controls">
+<button class="btn active" id="open">↗ Open box</button>
+<button class="btn" id="close">▣ Close box</button>
+<button class="btn" id="inside">◉ Inside view</button>
+<button class="btn" id="reset">↻ Reset view</button>
+</div>
+
+<section class="panel">
+<h2>MODEL OPENING</h2>
+<input class="range" id="slider" type="range"
+min="0" max="100" value="0">
+
+<div class="ends">
+<span>0% Closed</span>
+<span>100% Fully unfolded</span>
+</div>
+</section>
+
+<!-- DIMENSIONS -->
+<div class="metrics">
+<div class="metric">
+<small>Base side</small>
+<strong>5 cm</strong>
+</div>
+
+<div class="metric">
+<small>Vertical height</small>
+<strong>6 cm</strong>
+</div>
+
+<div class="metric">
+<small>Slant height</small>
+<strong>6.5 cm</strong>
+</div>
+</div>
+
+<!-- GEOMETRY LABELS -->
+<section class="panel">
+<h2>GEOMETRY IDENTIFICATION</h2>
+
+<div class="legend">
+<div><i class="dot" style="background:#ffcb68"></i>Apex (S)</div>
+<div><i class="dot" style="background:#49cbd8"></i>Square base</div>
+<div><i class="dot" style="background:#75aeea"></i>Triangular faces</div>
+<div><i class="dot" style="background:#f39cad"></i>Vertical height</div>
+<div><i class="dot" style="background:#a6e49c"></i>Slant height</div>
+<div><i class="dot" style="background:#fff"></i>Vertices A–D</div>
+</div>
+</section>
+
+<section class="panel">
+<h2>MODEL EXPLANATION</h2>
+<p class="explain" id="explain">
+The apex is the highest point of the pyramid.
+Four triangular faces connect to the square base.
+</p>
+</section>
+
+<!-- MATHEMATICAL PROPERTIES -->
+<section class="panel">
+<h2>MATHEMATICAL PROPERTIES</h2>
+
+<div class="facts">
+<div><small>Faces</small><b>5 (4 triangles + 1 square)</b></div>
+<div><small>Edges</small><b>8</b></div>
+<div><small>Vertices</small><b>5</b></div>
+<div><small>Base area</small><b>25 cm²</b></div>
+<div><small>Lateral area</small><b>65 cm²</b></div>
+<div><small>Total surface area</small><b>90 cm²</b></div>
+<div><small>Volume</small><b>50 cm³</b></div>
+<div><small>Net</small><b>1 square + 4 triangles</b></div>
+</div>
+</section>
+
+<!-- MATHEMATICAL CALCULATIONS -->
+<section class="panel" id="calculations">
+
+<h2>6.0 MATHEMATICAL CALCULATIONS</h2>
+
+<p class="explain" style="margin-bottom:12px">
+Given: side length of square base,
+<b>s = 5 cm</b>; perpendicular height,
+<b>h = 6 cm</b>; measured slant height,
+<b>l = 6.5 cm</b>.
+</p>
+
+<!-- 6.1 SLANT HEIGHT -->
+<div class="calc">
+<h3>6.1 VERIFICATION OF SLANT HEIGHT</h3>
+
+<p>
+Slant height (l) is the distance from the apex down
+the centre of a triangular face to the midpoint of a
+base edge. It can be calculated using the Pythagorean
+theorem.
+</p>
+
+<p><b>Formula:</b> l = √[h² + (s/2)²]</p>
+
+<p>Where:</p>
+<p>• l = slant height</p>
+<p>• h = vertical height = 6 cm</p>
+<p>• s = side of base length = 5 cm</p>
+
+<p><b>Substitute the values into the formula:</b></p>
+
+<p>l = √[6² + (5/2)²]</p>
+<p>l² = 36 + (2.5)²</p>
+<p>l² = 36 + 6.25</p>
+<p>l² = 42.25</p>
+<p>l = √42.25</p>
+
+<p class="answer">l = 6.5 cm</p>
+
+<p>
+Thus, the calculated slant height is 6.5 cm,
+which matches the measurement used in the gift box design.
+</p>
+</div>
+
+<!-- 6.2 BASE AREA -->
+<div class="calc">
+<h3>6.2 CALCULATION OF THE BASE AREA</h3>
+
+<p>
+The base of the pyramid is a square with a side length of 5 cm.
+</p>
+
+<p><b>Formula:</b> B = s²</p>
+
+<p>Where s = side of base length = 5 cm.</p>
+
+<p><b>Substitute the values into the formula:</b></p>
+
+<p>B = 5²</p>
+
+<p class="answer">B = 25 cm²</p>
+
+<p>Thus, the area of the square base is 25 cm².</p>
+</div>
+
+<!-- 6.3 LATERAL SURFACE AREA -->
+<div class="calc">
+<h3>6.3 CALCULATION OF LATERAL SURFACE AREA</h3>
+
+<p>
+The square pyramid consists of four identical triangular faces.
+</p>
+
+<p><b>Formula:</b> LSA = 2sl</p>
+
+<p>Where:</p>
+<p>• s = side of base length = 5 cm</p>
+<p>• l = slant height = 6.5 cm</p>
+
+<p><b>Substitute the values into the formula:</b></p>
+
+<p>LSA = 2(5)(6.5)</p>
+<p>LSA = 2(32.5)</p>
+
+<p class="answer">LSA = 65 cm²</p>
+
+<p>Thus, the total lateral surface area is 65 cm².</p>
+</div>
+
+<!-- 6.4 TOTAL SURFACE AREA -->
+<div class="calc">
+<h3>6.4 CALCULATION OF TOTAL SURFACE AREA</h3>
+
+<p>
+The total surface area includes the square base and
+the four triangular faces.
+</p>
+
+<p><b>Formula:</b> TSA = Base Area + Lateral Surface Area</p>
+
+<p>TSA = 25 + 65</p>
+
+<p class="answer">TSA = 90 cm²</p>
+
+<p>
+Thus, the total surface area of the square pyramid
+gift box is 90 cm². This calculation covers the
+pyramid's square base and four triangular faces;
+it does not include any extra glue tabs or construction flaps.
+</p>
+</div>
+
+<!-- 6.5 VOLUME -->
+<div class="calc">
+<h3>6.5 CALCULATION OF VOLUME</h3>
+
+<p><b>Formula:</b> V = ⅓s²h</p>
+
+<p>Where:</p>
+<p>• h = vertical height = 6 cm</p>
+<p>• s = side of base length = 5 cm</p>
+
+<p><b>Substitute the values into the formula:</b></p>
+
+<p>V = ⅓(5²)(6)</p>
+<p>V = ⅓(25)(6)</p>
+<p>V = ⅓(150)</p>
+
+<p class="answer">V = 50 cm³</p>
+
+<p>
+Thus, based on the formula, the volume of the
+square pyramid gift box is 50 cm³. This represents
+its theoretical internal capacity before allowing
+for cardboard thickness, folds or glue tabs.
+</p>
+</div>
+
+<div class="note">
+<b>Note:</b> Surface area is measured in square
+centimetres (cm²), while volume is measured in
+cubic centimetres (cm³). The slant height is measured
+along a triangular face, while the perpendicular
+height is measured vertically from the apex to the
+centre of the square base.
+</div>
+
+</section>
+
+<!-- NET DIMENSIONS -->
+<section class="panel">
+<h2>NET DIMENSIONS</h2>
+
+<p class="explain">
+The net has a central square measuring 5 cm × 5 cm.
+Each of its four triangular flaps has a 5 cm base and
+a 6.5 cm slant height (the altitude of the triangular face).
+</p>
+</section>
+
+<p class="foot">
+Tip: Drag the model with your finger or mouse to rotate it.
+Select Open Box to see all four triangular flaps around
+the square base.
+</p>
+
+</main>
+
+<!-- INTERACTIVE JAVASCRIPT -->
+<script>
+(()=>{
+const svg=document.getElementById('model');
+const art=document.getElementById('art');
+const NS='http://www.w3.org/2000/svg';
+
+const r=2.5,H=6,L=6.5;
+
+const base=[
+[-r,0,-r],
+[r,0,-r],
+[r,0,r],
+[-r,0,r]
+];
+
+const apex=[0,H,0];
+const center=[0,0,0];
+
+const sides=[
+{a:0,b:1,n:[0,0,-1],color:'#3989b6'},
+{a:1,b:2,n:[1,0,0],color:'#28749e'},
+{a:2,b:3,n:[0,0,1],color:'#559dc6'},
+{a:3,b:0,n:[-1,0,0],color:'#327fba'}
+];
+
+let angle=.72;
+let tilt=.3;
+let progress=0;
+let inside=false;
+let drag=null;
+
+function el(tag,attrs){
+const n=document.createElementNS(NS,tag);
+Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));
+art.appendChild(n);
+return n;
+}
+
+function project(p){
+const c=Math.cos(angle);
+const s=Math.sin(angle);
+const cp=Math.cos(tilt);
+const sp=Math.sin(tilt);
+
+const x=p[0]*c+p[2]*s;
+const z=-p[0]*s+p[2]*c;
+
+return[
+350+x*36,
+245-(p[1]*cp-z*sp)*36,
+p[1]*sp+z*cp
+];
+}
+
+function lerp(a,b,t){
+return a.map((v,i)=>v+(b[i]-v)*t);
+}
+
+function poly(points,fill,stroke='#d9edff',opacity=1){
+const q=points.map(project);
+
+el('polygon',{
+points:q.map(p=>p[0]+','+p[1]).join(' '),
+fill,
+stroke,
+'stroke-width':2,
+opacity
+});
+}
+
+function line(a,b,color,width=2,dash=''){
+const p=project(a);
+const q=project(b);
+
+el('line',{
+x1:p[0],y1:p[1],
+x2:q[0],y2:q[1],
+stroke:color,
+'stroke-width':width,
+'stroke-dasharray':dash
+});
+}
+
+function label(p,str,color='#fff',dx=0,dy=0,size=14){
+const q=project(p);
+
+const t=el('text',{
+x:q[0]+dx,
+y:q[1]+dy,
+fill:color,
+'font-size':size,
+'font-weight':700,
+'text-anchor':'middle',
+'paint-order':'stroke',
+'stroke':'#10213a',
+'stroke-width':3
+});
+
+t.textContent=str;
+}
+
+function draw(){
+
+art.replaceChildren();
+
+// Square base
+poly(
+base,
+inside?'#b9a77c':'#218e9b',
+'#80e5ec'
+);
+
+// FOUR TRIANGULAR FLAPS
+// All four triangles remain visible when fully unfolded.
+sides.forEach((f,i)=>{
+
+const mid=lerp(base[f.a],base[f.b],.5);
+
+const flat=mid.map(
+(v,k)=>v+f.n[k]*L
+);
+
+const tip=lerp(apex,flat,progress);
+
+// Interior view exposes the inside of the box.
+if(inside && i===0 && progress===0)return;
+
+poly(
+[base[f.a],base[f.b],tip],
+inside?'#a6c3b5':f.color,
+'#dcefff',
+inside?.48:.94
+);
+
+// Slant height on an unfolded triangular face.
+if(progress>.95 && i===0){
+
+line(tip,mid,'#b5ef9f',2,'5 4');
+
+label(
+lerp(mid,tip,.5),
+'6.5 cm',
+'#b5ef9f',
+18,0,13
+);
+}
+
+});
+
+// Base edges
+for(let i=0;i<4;i++){
+line(
+base[i],
+base[(i+1)%4],
+'#68e0e8',
+2.5
+);
+}
+
+// Vertices A, B, C, D
+['A','B','C','D'].forEach((v,i)=>{
+
+const q=project(base[i]);
+
+el('circle',{
+cx:q[0],
+cy:q[1],
+r:4,
+fill:'white'
+});
+
+label(
+base[i],
+v,
+'#fff',
+i===0||i===3?-14:14,
+i<2?-12:19,
+13
+);
+
+});
+
+// Apex and heights in closed view
+if(progress<.05&&!inside){
+
+line(apex,center,'#f39cad',2.5,'7 5');
+
+label(
+apex,
+'S · APEX',
+'#ffcb68',
+0,-20,16
+);
+
+label(
+[0,3,0],
+'6 cm',
+'#ffc0cd',
+22,0,14
+);
+
+line(
+apex,
+[0,0,-r],
+'#a6e49c',
+2.5,'5 4'
+);
+
+label(
+[0,3,-r],
+'6.5 cm',
+'#a6e49c',
+20,0,13
+);
+}
+
+// Fully opened net
+if(progress>.95){
+
+label(
+center,
+'SQUARE BASE · 5 × 5 cm',
+'#fff',
+0,4,14
+);
+
+const t=el('text',{
+x:350,
+y:49,
+fill:'#b8dcff',
+'font-size':15,
+'text-anchor':'middle',
+'font-weight':700
+});
+
+t.textContent='COMPLETE UNFOLDED NET';
+}
+
+// Inside view
+if(inside){
+
+const t=el('text',{
+x:350,
+y:55,
+fill:'#b7efbd',
+'font-size':16,
+'text-anchor':'middle',
+'font-weight':700
+});
+
+t.textContent='INTERIOR VIEW';
+}
+
+}
+
+function update(){
+
+document.getElementById('slider').value=
+Math.round(progress*100);
+
+document.getElementById('status').textContent=
+inside?'INTERIOR VIEW':
+progress>.99?'FULLY OPEN NET':
+progress<.01?'CLOSED BOX':
+'PARTIALLY OPEN';
+
+document.getElementById('explain').textContent=
+inside
+?'Interior view: inspect the square floor and inner surfaces of the triangular flaps.'
+:progress>.99
+?'All four triangular faces are unfolded around the central square. This is the complete net of your gift box.'
+:progress<.01
+?'The four triangular faces meet at apex S. The square base is 5 cm × 5 cm and the vertical height is 6 cm.'
+:'The four triangular faces are opening outward from the square base.';
+
+[
+['open',progress>.5&&!inside],
+['close',progress<.5&&!inside],
+['inside',inside]
+].forEach(([id,on])=>{
+document.getElementById(id)
+.classList.toggle('active',on);
+});
+
+}
+
+function setProgress(v){
+progress=Math.max(0,Math.min(1,v));
+inside=false;
+draw();
+update();
+}
+
+// BUTTONS
+document.getElementById('open').onclick=()=>{
+setProgress(1);
+};
+
+document.getElementById('close').onclick=()=>{
+setProgress(0);
+};
+
+document.getElementById('inside').onclick=()=>{
+inside=!inside;
+
+if(inside)progress=0;
+
+draw();
+update();
+};
+
+document.getElementById('reset').onclick=()=>{
+angle=.72;
+tilt=.3;
+inside=false;
+setProgress(0);
+};
+
+// OPENING SLIDER
+document.getElementById('slider').oninput=e=>{
+setProgress(Number(e.target.value)/100);
+};
+
+// MOUSE AND TOUCH ROTATION
+svg.addEventListener('pointerdown',e=>{
+drag={x:e.clientX,y:e.clientY};
+svg.setPointerCapture(e.pointerId);
+});
+
+svg.addEventListener('pointermove',e=>{
+
+if(!drag)return;
+
+angle+=(e.clientX-drag.x)*.009;
+
+tilt=Math.max(
+-.7,
+Math.min(
+1.1,
+tilt+(e.clientY-drag.y)*.007
+)
+);
+
+drag={x:e.clientX,y:e.clientY};
+
+draw();
+
+});
+
+svg.addEventListener('pointerup',()=>{
+drag=null;
+});
+
+svg.addEventListener('pointercancel',()=>{
+drag=null;
+});
+
+draw();
+update();
+
+})();
+</script>
+
+</body>
+</html>
